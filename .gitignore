@@ -1,0 +1,37 @@
+# ── Build output ──────────────────────────────────────────────────────────
+bin/
+obj/
+publish/
+installer_output/
+
+# ── Visual Studio ─────────────────────────────────────────────────────────
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# ── NuGet ─────────────────────────────────────────────────────────────────
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ── App user data (dev test data, should not be committed) ────────────────
+# AppData settings generated during development/testing
+# %AppData%\SimpleDesktopFence\ is outside the repo so not needed here
+
+# ── OS generated ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Logs & temp ───────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+
+# ── Crash dumps ───────────────────────────────────────────────────────────
+*.dmp

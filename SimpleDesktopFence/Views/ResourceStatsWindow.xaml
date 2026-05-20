@@ -1,0 +1,182 @@
+﻿<Window x:Class="SimpleDesktopFence.Views.ResourceStatsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Resource Monitor"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Width="420" Height="520"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Bg"      Color="#F01A1A2E"/>
+        <SolidColorBrush x:Key="TitleBg" Color="#44000000"/>
+        <SolidColorBrush x:Key="Border"  Color="#55FFFFFF"/>
+        <SolidColorBrush x:Key="Text"    Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="Dim"     Color="#99FFFFFF"/>
+        <SolidColorBrush x:Key="Grid"    Color="#22FFFFFF"/>
+        <SolidColorBrush x:Key="CpuLine" Color="#FF6699FF"/>
+        <SolidColorBrush x:Key="RamLine" Color="#FF99FF88"/>
+
+        <Style x:Key="TitleBtn" TargetType="Button">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="#CCFFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width"  Value="28"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#44FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="StatLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Dim}"/>
+            <Setter Property="FontSize"   Value="11"/>
+        </Style>
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="FontSize"   Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="ChartLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Dim}"/>
+            <Setter Property="FontSize"   Value="10"/>
+        </Style>
+        <Style x:Key="PanelPathText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="Margin"     Value="0,2,0,2"/>
+        </Style>
+        <Style x:Key="PanelIndexText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Dim}"/>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="Width"      Value="20"/>
+            <Setter Property="Margin"     Value="0,2,6,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Border Background="{StaticResource Bg}"
+                BorderBrush="{StaticResource Border}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title bar -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource TitleBg}"
+                        CornerRadius="8,8,0,0"
+                        MouseLeftButtonDown="TitleBar_MouseDown">
+                    <Grid Margin="12,0,6,0">
+                        <TextBlock Text="Resource Monitor"
+                                   Foreground="{StaticResource Text}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                        <Button Style="{StaticResource TitleBtn}"
+                                Content="✕"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Click="CloseBtn_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Scrollable content -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16,12,16,12">
+
+                        <!-- ── Summary row ── -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource StatLabel}" Text="CPU"/>
+                                <TextBlock x:Name="CpuValueText" Style="{StaticResource StatValue}" Text="–"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Style="{StaticResource StatLabel}" Text="RAM"/>
+                                <TextBlock x:Name="RamValueText" Style="{StaticResource StatValue}" Text="–"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource StatLabel}" Text="Uptime"/>
+                                <TextBlock x:Name="UptimeText" Style="{StaticResource StatValue}" Text="00:00:00"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="{StaticResource Grid}" Margin="0,0,0,10"/>
+
+                        <!-- ── CPU chart ── -->
+                        <TextBlock Style="{StaticResource ChartLabel}" Text="CPU %  (0 – 100)" Margin="0,0,0,4"/>
+                        <Border Height="80" Background="#11FFFFFF"
+                                BorderBrush="{StaticResource Grid}" BorderThickness="1"
+                                Margin="0,0,0,10" ClipToBounds="True">
+                            <Canvas x:Name="CpuCanvas">
+                                <Polyline x:Name="CpuPolyline"
+                                          Stroke="{StaticResource CpuLine}"
+                                          StrokeThickness="1.5" StrokeLineJoin="Round"/>
+                            </Canvas>
+                        </Border>
+
+                        <!-- ── RAM chart ── -->
+                        <TextBlock x:Name="RamChartLabel" Style="{StaticResource ChartLabel}" Text="RAM (MB)" Margin="0,0,0,4"/>
+                        <Border Height="80" Background="#11FFFFFF"
+                                BorderBrush="{StaticResource Grid}" BorderThickness="1"
+                                Margin="0,0,0,10" ClipToBounds="True">
+                            <Canvas x:Name="RamCanvas">
+                                <Polyline x:Name="RamPolyline"
+                                          Stroke="{StaticResource RamLine}"
+                                          StrokeThickness="1.5" StrokeLineJoin="Round"/>
+                            </Canvas>
+                        </Border>
+
+                        <!-- Legend -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Rectangle Width="12" Height="3" Fill="{StaticResource CpuLine}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="CPU" Style="{StaticResource ChartLabel}" Margin="0,0,16,0"/>
+                            <Rectangle Width="12" Height="3" Fill="{StaticResource RamLine}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="RAM" Style="{StaticResource ChartLabel}"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{StaticResource Grid}" Margin="0,0,0,10"/>
+
+                        <!-- ── Panel info section ── -->
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Style="{StaticResource ChartLabel}" Text="ACTIVE PANELS"/>
+                            <TextBlock x:Name="PanelCountText"
+                                       Style="{StaticResource ChartLabel}"
+                                       HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <!-- Panel list — rows added dynamically in code-behind -->
+                        <StackPanel x:Name="PanelListPanel"/>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

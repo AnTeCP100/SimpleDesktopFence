@@ -1,0 +1,268 @@
+<Window x:Class="SimpleDesktopFence.Views.FolderPanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:SimpleDesktopFence.Converters"
+        Title="SimpleDesktopFence"
+        WindowStyle="None"
+        ShowInTaskbar="False"
+        Topmost="{Binding AlwaysOnTop}"
+        Width="500" Height="380"
+        MinWidth="280" MinHeight="80"
+        Opacity="{Binding WindowOpacity}">
+    <Window.Style>
+        <Style TargetType="Window">
+            <Setter Property="WindowChrome.WindowChrome">
+                <Setter.Value>
+                    <WindowChrome ResizeBorderThickness="6"
+                          CaptionHeight="0"
+                          GlassFrameThickness="0"
+                          UseAeroCaptionButtons="False"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Style>
+    <Window.Resources>
+        <!-- Shared brushes (non-dynamic; panel background is data-bound below) -->
+        <SolidColorBrush x:Key="TitleBg"    Color="#55000000"/>
+        <SolidColorBrush x:Key="BorderClr"  Color="#55FFFFFF"/>
+        <SolidColorBrush x:Key="TextMain"   Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="TextDim"    Color="#99FFFFFF"/>
+        <SolidColorBrush x:Key="RowHover"   Color="#22FFFFFF"/>
+        <SolidColorBrush x:Key="RowSel"     Color="#4466AAFF"/>
+        <SolidColorBrush x:Key="HeaderBg"   Color="#33FFFFFF"/>
+        <SolidColorBrush x:Key="Separator"  Color="#22FFFFFF"/>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:FileNameConverter x:Key="FileNameConv"/>
+
+        <!-- Title-bar icon buttons -->
+        <Style x:Key="TitleBtn" TargetType="Button">
+            <Setter Property="Background"     Value="Transparent"/>
+            <Setter Property="Foreground"     Value="#CCFFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width"  Value="28"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#44FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#66FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ListView -->
+        <Style TargetType="ListView">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextMain}"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+        </Style>
+
+        <!-- ListViewItem - custom template removes default blue highlight -->
+        <Style TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListViewItem">
+                        <Border x:Name="bd" Background="Transparent" Padding="2,1">
+                            <GridViewRowPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource RowHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource RowSel}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Column headers - EventSetter wires sort click for all headers at once -->
+        <Style TargetType="GridViewColumnHeader">
+            <Setter Property="Background"      Value="{StaticResource HeaderBg}"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextDim}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource Separator}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Height"          Value="22"/>
+            <Setter Property="Padding"         Value="6,0"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="FontSize"        Value="{Binding FontSize}"/>
+            <EventSetter Event="Click" Handler="ColumnHeader_Click"/>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <!-- Main panel - background bound to ViewModel.BackgroundBrush for live preview -->
+        <Border Background="{Binding BackgroundBrush}"
+                BorderBrush="{StaticResource BorderClr}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition x:Name="ContentRow" Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- ── Title bar ── -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource TitleBg}"
+                        CornerRadius="4,4,0,0"
+                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid Margin="6,0,4,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="26"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Quick folder select (kept from Phase 1 as requested) -->
+                        <Button Grid.Column="0"
+                                Style="{StaticResource TitleBtn}"
+                                FontSize="14" Content="📁"
+                                ToolTip="Select folder"
+                                Click="FolderSelect_Click"/>
+
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding FolderName}"
+                                   Foreground="{StaticResource TextMain}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Margin="6,0,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Settings (opens ConfigWindow) -->
+                            <Button Style="{StaticResource TitleBtn}"
+                                    Content="⚙"
+                                    ToolTip="Panel settings"
+                                    Click="ConfigBtn_Click"/>
+                            <Button Style="{StaticResource TitleBtn}"
+                                    Content="🗑" Foreground="#FFFF7777"
+                                    ToolTip="Delete this panel permanently"
+                                    Click="DeleteBtn_Click"/>
+                            <Button x:Name="CollapseBtn"
+                                    Style="{StaticResource TitleBtn}"
+                                    Content="—"
+                                    ToolTip="Collapse"
+                                    Click="CollapseBtn_Click"/>
+                            <Button Style="{StaticResource TitleBtn}"
+                                    Content="✕"
+                                    ToolTip="Close"
+                                    Click="CloseBtn_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ── File list ── -->
+                <Grid Grid.Row="1">
+
+                    <!-- Empty-state hint -->
+                    <TextBlock
+                        Text="Click 📁 in the title bar to choose a folder."
+                        Visibility="{Binding HasNoFolder, Converter={StaticResource BoolToVis}}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource TextDim}"
+                        FontSize="12"/>
+
+                    <!-- Right-click: PreviewMouseRightButtonDown selects the item first -->
+                    <ListView x:Name="FileListView"
+                              ItemsSource="{Binding ItemsView}"
+                              FontSize="{Binding FontSize}"
+                              MouseDoubleClick="FileListView_MouseDoubleClick"
+                              PreviewMouseRightButtonDown="FileListView_PreviewRightDown"
+                              MouseRightButtonUp="FileListView_RightButtonUp"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.View>
+                            <GridView>
+
+                                <!-- Name column (always visible) -->
+                                <GridViewColumn Header="Name" Width="200">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Image Source="{Binding Icon}"
+                                                       Width="16" Height="16"
+                                                       Margin="0,0,6,0"
+                                                       VerticalAlignment="Center"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextMain}"
+                                                           TextTrimming="CharacterEllipsis">
+                                                    <TextBlock.Text>
+                                                        <!-- MultiBinding: Name, IsDirectory, ShowExtension -->
+                                                        <MultiBinding Converter="{StaticResource FileNameConv}">
+                                                            <Binding Path="Name"/>
+                                                            <Binding Path="IsDirectory"/>
+                                                            <Binding Path="DataContext.ShowExtension"
+                                                                     RelativeSource="{RelativeSource AncestorType={x:Type ListView}}"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+
+                                <!-- Size column - Width=0 hides it entirely -->
+                                <GridViewColumn Header="Size" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplaySize}"
+                                                       Foreground="{StaticResource TextDim}"
+                                                       HorizontalAlignment="Right"
+                                                       Margin="0,0,4,0"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+
+                                <!-- Type column -->
+                                <GridViewColumn Header="Type" Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding FileType}"
+                                                       Foreground="{StaticResource TextDim}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+
+                                <!-- Date column -->
+                                <GridViewColumn Header="Date" Width="140">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="{Binding ModifiedDate, StringFormat=yyyy/MM/dd HH:mm}"
+                                                Foreground="{StaticResource TextDim}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <UseWindowsForms>false</UseWindowsForms>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>SimpleDesktopFence</AssemblyName>
+        <RootNamespace>SimpleDesktopFence</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <ApplicationIcon>App.ico</ApplicationIcon>
+    </PropertyGroup>
+    <ItemGroup>
+      <None Remove="App.ico" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="App.ico">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </EmbeddedResource>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+        <PackageReference Include="System.Drawing.Common" Version="10.0.8" />
+    </ItemGroup>
+</Project>
