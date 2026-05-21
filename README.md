@@ -84,14 +84,6 @@ A lightweight Windows desktop panel application that displays folder contents as
 2. Run the installer and follow the prompts.
 3. SimpleDesktopFence will start automatically after installation.
 
-### Option B — Portable
-
-1. Download `SimpleDesktopFence_Portable_x.x.x.zip` from the [Releases](../../releases) page.
-2. Extract to any folder.
-3. Run `SimpleDesktopFence.exe`.
-
-> **Note:** The portable version requires [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) to be installed separately. The installer version is self-contained.
-
 ---
 
 ## Building from Source
